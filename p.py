@@ -71,6 +71,14 @@ START_IMAGES = [
         'url': 'https://www.craiyon.com/image/bAhq_xScRm-wk-hD9GzUrw',
         'caption': '🤖 *AI-Powered Attacks* 🤖\n\nExample 20.235.43.9 14533 120 100\n\n🧠 *Machine learning destruction* 🧠'
     },
+    {
+        'url': 'https://mobilehd.blob.core.windows.net/main/2017/02/girl-sexy-black-swimsuit-look-1080x1920.jpg',
+        'caption': '🤖 *AI-Powered Attacks* 🤖\n\nExample 20.235.43.9 14533 120 100\n\n🧠 *Machine learning destruction* 🧠'
+    },
+    {
+        'url': 'https://s2.best-wallpaper.net/wallpaper/iphone/2007/Beautiful-long-hair-girl-look-sunshine-summer_iphone_640x1136.jpg',
+        'caption': '🤖 *AI-Powered Attacks* 🤖\n\nExample 20.235.43.9 14533 120 100\n\n🧠 *Machine learning destruction* 🧠'
+    },
 ]
 
 # File to store key data
