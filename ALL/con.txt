@@ -1,0 +1,34 @@
+gcc -o bgmi1 a.c -lpthread -lssl -lcrypto
+
+gcc -o bgmi test.c -lpthread -lz -static
+
+gcc -o bgmi C.c -lpthread
+
+gcc -o bgmi b.c -lpthread -lssl -lcrypto
+
+gcc -o bgmi b.c -pthread
+
+gcc c.c -o bgmi -pthread -lssl -lcrypto
+
+gcc -o bgmi t2.c -pthread
+
+gcc -o bgmi ht.c -pthread
+
+gcc -o bgmi flash.c -lpthread -lz
+
+gcc -o bgmi ht.c -pthread
+
+gcc -o bgmi test.c -pthread
+
+gcc test.c -o test -pthread -O3
+
+gcc raj.c -o bgmi -pthread -static -lm
+
+gcc -o bgmi test3.c -pthread
+
+gcc test2.c -o bgmi -lpthread
+
+
+gcc -o bgmi test3.c -lpthread
+
+
